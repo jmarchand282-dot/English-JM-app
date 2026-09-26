@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="joenglish_app_name">JoEnglish</string>
+    <string name="joenglish_slogan">Apprends aujourd hui un meilleur demain</string>
+
+    <string name="joenglish_welcome_title">Bienvenue sur JoEnglish</string>
+    <string name="joenglish_welcome_description">Apprends l anglais avec des lecons interactives des exercices et une progression personnalisee</string>
+
+    <string name="joenglish_create_profile">Creer mon profil</string>
+    <string name="joenglish_continue">Continuer</string>
+    <string name="joenglish_start_course">Commencer mon parcours</string>
+
+    <string name="joenglish_home">Accueil</string>
+    <string name="joenglish_course">Cours</string>
+    <string name="joenglish_review">Revisions</string>
+    <string name="joenglish_expressions">Expressions utiles</string>
+    <string name="joenglish_statistics">Mes statistiques</string>
+    <string name="joenglish_profile">Mon profil</string>
+    <string name="joenglish_settings">Parametres</string>
+
+    <string name="joenglish_lesson_completed">Lecon terminee</string>
+    <string name="joenglish_next_lesson">Lecon suivante</string>
+    <string name="joenglish_back_home">Retour a l accueil</string>
+    <string name="joenglish_listen">Ecouter</string>
+
+    <string name="joenglish_daily_goal">Objectif quotidien</string>
+    <string name="joenglish_level">Niveau</string>
+    <string name="joenglish_xp">XP</string>
+    <string name="joenglish_streak">Serie</string>
+    <string name="joenglish_lessons_completed">Lecons terminees</string>
+
+    <string name="joenglish_reset_progress">Reinitialiser la progression</string>
+    <string name="joenglish_cancel">Annuler</string>
+    <string name="joenglish_reset">Reinitialiser</string>
+    <string name="joenglish_audio_test">Tester l audio</string>
+
+    <string name="joenglish_creator">Cree par Joseph Marchand</string>
+
+</resources>
