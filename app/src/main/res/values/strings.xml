@@ -2,10 +2,10 @@
 <resources>
 
     <string name="app_name">JoEnglish</string>
-    <string name="app_slogan">Apprends aujourd'hui, un meilleur demain !</string>
+    <string name="app_slogan">Apprends aujourd'hui un meilleur demain</string>
 
     <string name="welcome_title">Bienvenue sur JoEnglish</string>
-    <string name="welcome_description">Apprends l'anglais avec des lecons interactives, des exercices et une progression personnalisee.</string>
+    <string name="welcome_description">Apprends l anglais avec des lecons interactives des exercices et une progression personnalisee</string>
 
     <string name="create_profile">Creer mon profil</string>
     <string name="continue_text">Continuer</string>
@@ -19,9 +19,9 @@
     <string name="profile">Mon profil</string>
     <string name="settings">Parametres</string>
 
-    <string name="lesson_completed">Lecon terminee !</string>
+    <string name="lesson_completed">Lecon terminee</string>
     <string name="next_lesson">Lecon suivante</string>
-    <string name="back_home">Retour a l'accueil</string>
+    <string name="back_home">Retour a l accueil</string>
     <string name="listen">Ecouter</string>
 
     <string name="daily_goal">Objectif quotidien</string>
@@ -33,7 +33,7 @@
     <string name="reset_progress">Reinitialiser la progression</string>
     <string name="cancel">Annuler</string>
     <string name="reset">Reinitialiser</string>
-    <string name="audio_test">Tester l'audio</string>
+    <string name="audio_test">Tester l audio</string>
 
     <string name="creator">Cree par Joseph Marchand</string>
 
