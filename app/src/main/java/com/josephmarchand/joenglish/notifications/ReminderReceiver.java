@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.josephmarchand.joenglish.MainActivity;
-import com.josephmarchand.joenglish.R;
 
 public class ReminderReceiver extends BroadcastReceiver {
 
@@ -25,13 +24,19 @@ public class ReminderReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
                         .setContentTitle("JoEnglish")
-                        .setContentText("C'est le moment d'apprendre quelques mots d'anglais !")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentText(
+                                "C est le moment d apprendre quelques mots d anglais !"
+                        )
+                        .setPriority(
+                                NotificationCompat.PRIORITY_DEFAULT
+                        )
                         .setAutoCancel(true);
 
-        Intent openAppIntent = new Intent(context, MainActivity.class);
+        Intent openAppIntent =
+                new Intent(context, MainActivity.class);
+
         openAppIntent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -51,10 +56,14 @@ public class ReminderReceiver extends BroadcastReceiver {
         builder.setContentIntent(pendingIntent);
 
         try {
-            NotificationManagerCompat.from(context)
-                    .notify(NOTIFICATION_ID, builder.build());
+            NotificationManagerCompat
+                    .from(context)
+                    .notify(
+                            NOTIFICATION_ID,
+                            builder.build()
+                    );
         } catch (SecurityException ignored) {
-            // Les notifications peuvent être refusées par l'utilisateur.
+            // Les notifications peuvent etre refusees.
         }
     }
 
@@ -63,10 +72,12 @@ public class ReminderReceiver extends BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             CharSequence name = "Rappels JoEnglish";
-            String description =
-                    "Notifications de rappel pour apprendre l'anglais";
 
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            String description =
+                    "Notifications de rappel pour apprendre l anglais";
+
+            int importance =
+                    NotificationManager.IMPORTANCE_DEFAULT;
 
             NotificationChannel channel =
                     new NotificationChannel(
@@ -78,11 +89,14 @@ public class ReminderReceiver extends BroadcastReceiver {
             channel.setDescription(description);
 
             NotificationManager notificationManager =
-                    context.getSystemService(NotificationManager.class);
+                    context.getSystemService(
+                            NotificationManager.class
+                    );
 
             if (notificationManager != null) {
-                notificationManager.createNotificationChannel(channel);
+                notificationManager
+                        .createNotificationChannel(channel);
             }
         }
     }
-          }
+                    }
