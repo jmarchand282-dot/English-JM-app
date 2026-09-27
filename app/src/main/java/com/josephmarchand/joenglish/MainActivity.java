@@ -1,325 +1,335 @@
 package com.josephmarchand.joenglish;
 
 import android.app.*;
-import android.os.*;
 import android.content.*;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.os.*;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.view.*;
 import android.widget.*;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.josephmarchand.joenglish.lessons.LessonBank;
 import com.josephmarchand.joenglish.models.Lesson;
-
 import java.util.*;
 
 public class MainActivity extends AppCompatActivity {
-
-    private LinearLayout root;
+    private LinearLayout root, content;
     private TextToSpeech tts;
-    private android.content.SharedPreferences prefs;
+    private SharedPreferences prefs;
+    private int xp, streak, completedLessons, currentLesson, dailyXp;
+    private String firstName, username, level, targetLanguage, variant, goal, dailyGoal;
+    private Uri profilePhoto;
+    private final int BLUE=Color.rgb(37,99,235), INDIGO=Color.rgb(79,70,229);
+    private final int BG=Color.rgb(246,248,252), DARK=Color.rgb(24,35,58);
+    private final int MUTED=Color.rgb(100,116,139), WHITE=Color.WHITE;
 
-    private int xp = 0;
-    private int streak = 0;
-    private int completedLessons = 0;
-    private int currentLesson = 1;
-
-    private String firstName = "";
-    private String username = "";
-    private String level = "A1";
-    private String targetLanguage = "English";
-    private String englishVariant = "American English";
-
-    private final int BLUE = Color.rgb(79, 70, 229);
-    private final int GREEN = Color.rgb(22, 163, 74);
-    private final int BG = Color.rgb(247, 248, 252);
-    private final int DARK = Color.rgb(30, 30, 40);
+    private int dp(float v){
+        return (int)(v*getResources().getDisplayMetrics().density+0.5f);
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle b){
+        super.onCreate(b);
+        prefs=getSharedPreferences("joenglish",MODE_PRIVATE);
+        load();
 
-        prefs = getSharedPreferences("joenglish_data", MODE_PRIVATE);
-        loadData();
-
-        tts = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS) {
+        tts=new TextToSpeech(this,s->{
+            if(s==TextToSpeech.SUCCESS)
                 tts.setLanguage(Locale.US);
-            }
         });
 
-        if (firstName.isEmpty()) {
-            showWelcome();
-        } else {
-            showHome();
-        }
+        if(firstName.isEmpty())
+            welcome();
+        else
+            home();
     }
 
-    private void loadData() {
-        firstName = prefs.getString("firstName", "");
-        username = prefs.getString("username", "");
-        level = prefs.getString("level", "A1");
-        targetLanguage = prefs.getString("targetLanguage", "English");
-        englishVariant = prefs.getString("variant", "American English");
+    private void load(){
+        firstName=prefs.getString("firstName","");
+        username=prefs.getString("username","");
+        level=prefs.getString("level","A1");
+        targetLanguage=prefs.getString("targetLanguage","English");
+        variant=prefs.getString("variant","American English");
+        goal=prefs.getString("goal","Anglais général");
+        dailyGoal=prefs.getString("dailyGoal","20 minutes");
 
-        xp = prefs.getInt("xp", 0);
-        streak = prefs.getInt("streak", 0);
-        completedLessons = prefs.getInt("completedLessons", 0);
-        currentLesson = prefs.getInt("currentLesson", 1);
+        String photo=prefs.getString("photo","");
+        profilePhoto=photo.isEmpty()?null:Uri.parse(photo);
+
+        xp=prefs.getInt("xp",0);
+        streak=prefs.getInt("streak",0);
+        completedLessons=prefs.getInt("completed",0);
+        currentLesson=prefs.getInt("currentLesson",1);
+        dailyXp=prefs.getInt("dailyXp",0);
     }
 
-    private void saveData() {
+    private void save(){
         prefs.edit()
-                .putString("firstName", firstName)
-                .putString("username", username)
-                .putString("level", level)
-                .putString("targetLanguage", targetLanguage)
-                .putString("variant", englishVariant)
-                .putInt("xp", xp)
-                .putInt("streak", streak)
-                .putInt("completedLessons", completedLessons)
-                .putInt("currentLesson", currentLesson)
+                .putString("firstName",firstName)
+                .putString("username",username)
+                .putString("level",level)
+                .putString("targetLanguage",targetLanguage)
+                            .putString("variant",variant)
+                .putString("goal",goal)
+                .putString("dailyGoal",dailyGoal)
+                .putString("photo",profilePhoto==null?"":profilePhoto.toString())
+                .putInt("xp",xp)
+                .putInt("streak",streak)
+                .putInt("completed",completedLessons)
+                .putInt("currentLesson",currentLesson)
+                .putInt("dailyXp",dailyXp)
                 .apply();
     }
 
-    private void baseScreen() {
-        root = new LinearLayout(this);
+    private void screen(){
+        root=new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
+        ScrollView sv=new ScrollView(this);
 
-        LinearLayout content = new LinearLayout(this);
+        content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(24, 28, 24, 32);
+        content.setPadding(dp(20),dp(16),dp(20),dp(28));
 
-        scroll.addView(content);
-        root.addView(scroll);
+        sv.addView(content);
+
+        root.addView(
+                sv,
+                new LinearLayout.LayoutParams(-1,0,1)
+        );
 
         setContentView(root);
     }
 
-    private TextView text(String value, float size) {
-        TextView t = new TextView(this);
-        t.setText(value);
-        t.setTextSize(size);
+    private TextView tv(String s,float z){
+        TextView t=new TextView(this);
+        t.setText(s);
+        t.setTextSize(z);
         t.setTextColor(DARK);
-        t.setPadding(0, 8, 0, 8);
+        t.setPadding(0,dp(5),0,dp(5));
         return t;
     }
 
-    private Button button(String label) {
-        Button b = new Button(this);
-        b.setText(label);
+    private TextView title(String s){
+        TextView t=tv(s,27);
+        t.setTypeface(null,1);
+        t.setPadding(0,dp(10),0,dp(10));
+        return t;
+    }
+
+    private GradientDrawable bg(int color,float r){
+        GradientDrawable g=new GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(dp(r));
+        return g;
+    }
+
+    private Button btn(String s){
+        Button b=new Button(this);
+        b.setText(s);
         b.setTextSize(15);
-        b.setTextColor(Color.WHITE);
-        b.setBackgroundColor(BLUE);
+        b.setTextColor(WHITE);
+        b.setAllCaps(false);
+        b.setBackground(bg(INDIGO,14));
 
-        LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+        LinearLayout.LayoutParams p=
+                new LinearLayout.LayoutParams(-1,dp(52));
 
-        p.setMargins(0, 8, 0, 8);
+        p.setMargins(0,dp(6),0,dp(6));
         b.setLayoutParams(p);
 
         return b;
     }
 
-    private EditText input(String hint) {
-        EditText e = new EditText(this);
+    private Button lightBtn(String s){
+        Button b=btn(s);
+        b.setTextColor(INDIGO);
+        b.setBackground(bg(Color.rgb(232,236,255),14));
+        return b;
+    }
+
+    private EditText input(String hint){
+        EditText e=new EditText(this);
         e.setHint(hint);
         e.setTextSize(16);
-        e.setPadding(16, 12, 16, 12);
+        e.setPadding(dp(14),dp(8),dp(14),dp(8));
+        e.setBackground(bg(WHITE,12));
 
-        LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+        LinearLayout.LayoutParams p=
+                new LinearLayout.LayoutParams(-1,dp(55));
 
-        p.setMargins(0, 8, 0, 8);
+        p.setMargins(0,dp(6),0,dp(6));
         e.setLayoutParams(p);
 
         return e;
     }
 
-    private void showWelcome() {
+    private LinearLayout card(){
+        LinearLayout l=new LinearLayout(this);
+        l.setOrientation(LinearLayout.VERTICAL);
+        l.setPadding(dp(16),dp(12),dp(16),dp(12));
+        l.setBackground(bg(WHITE,18));
 
-        baseScreen();
+        LinearLayout.LayoutParams p=
+                new LinearLayout.LayoutParams(-1,-2);
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
+        p.setMargins(0,dp(6),0,dp(10));
+        l.setLayoutParams(p);
 
-        TextView logo = text("🎓 JoEnglish", 34);
+        return l;
+    }
+        private void welcome(){
+        screen();
+
+        TextView logo=title("🎓  JoEnglish");
         logo.setTextColor(BLUE);
-        logo.setGravity(Gravity.CENTER);
-
+        logo.setGravity(17);
         content.addView(logo);
 
-        TextView slogan = text(
-                "Apprends aujourd'hui,\nun meilleur demain !",
-                20
+        TextView s=tv(
+                "Apprends aujourd’hui,\nun meilleur demain !",
+                21
         );
-        slogan.setGravity(Gravity.CENTER);
+        s.setGravity(17);
+        content.addView(s);
 
-        content.addView(slogan);
-
-        content.addView(text(
-                "\nUne application pour apprendre l'anglais " +
-                "avec des leçons, des exercices et une progression personnelle.",
+        content.addView(tv(
+                "\nUne vraie application d’apprentissage : " +
+                "parcours A1 à C2, leçons, révisions, expressions, " +
+                "statistiques, profil, audio et défis.",
                 16
         ));
 
-        Button start = button("Créer mon profil");
-
-        start.setOnClickListener(v -> showProfileCreation());
-
-        content.addView(start);
+        Button b=btn("Commencer");
+        b.setOnClickListener(v->profileSetup());
+        content.addView(b);
     }
 
-    private void showProfileCreation() {
+    private void profileSetup(){
+        screen();
 
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text("Créer ton profil", 28));
-
-        content.addView(text(
-                "Quelques informations pour personnaliser ton apprentissage.",
+        content.addView(title("Créer ton profil"));
+        content.addView(tv(
+                "Personnalise ton espace JoEnglish.",
                 15
         ));
 
-        EditText first = input("Prénom ou nom d'affichage");
-        EditText user = input("@nom_utilisateur");
+        EditText n=input("Prénom / nom d’affichage");
+        EditText u=input("@nom_utilisateur");
 
-        content.addView(first);
-        content.addView(user);
+        content.addView(n);
+        content.addView(u);
 
-        content.addView(text("Ton objectif", 20));
+        content.addView(tv(
+                "Pourquoi apprends-tu ?",
+                18
+        ));
 
-        Spinner goal = new Spinner(this);
-
-        String[] goals = {
+        Spinner g=spin(new String[]{
+                "Anglais général",
                 "Voyage",
                 "Travail",
                 "Études",
                 "Conversation",
-                "Films et séries",
-                "Culture",
-                "Anglais général"
-        };
+                "Films et séries"
+        });
 
-        goal.setAdapter(new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                goals
-        ));
+        content.addView(g);
 
-        content.addView(goal);
+        Button next=btn("Continuer");
 
-        Button next = button("Continuer");
-
-        next.setOnClickListener(v -> {
-
-            String name = first.getText().toString().trim();
-
-            if (name.isEmpty()) {
-                first.setError("Entre ton prénom");
+        next.setOnClickListener(v->{
+            if(n.getText().toString().trim().isEmpty()){
+                n.setError("Entre ton nom");
                 return;
             }
 
-            firstName = name;
-            username = user.getText().toString().trim();
+            firstName=n.getText().toString().trim();
+            username=u.getText().toString().trim();
+            goal=g.getSelectedItem().toString();
 
-            saveData();
-
-            showLearningSettings();
+            save();
+            languageSetup();
         });
 
         content.addView(next);
     }
 
-    private void showLearningSettings() {
+    private Spinner spin(String[] a){
+        Spinner s=new Spinner(this);
 
-        baseScreen();
+        s.setAdapter(
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_dropdown_item,
+                        a
+                )
+        );
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
+        return s;
+    }
 
-        content.addView(text("Configurer ton apprentissage", 27));
+    private void languageSetup(){
+        screen();
 
-        content.addView(text("Langue à apprendre", 19));
+        content.addView(title(
+                "Configurer ton apprentissage"
+        ));
 
-        Spinner language = new Spinner(this);
+        content.addView(tv(
+                "Langue à apprendre",
+                18
+        ));
 
-        String[] languages = {
+        Spinner lang=spin(new String[]{
                 "English",
                 "Français",
                 "Español",
                 "Português",
                 "Deutsch"
-        };
+        });
 
-        language.setAdapter(new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                languages
+        content.addView(lang);
+
+        content.addView(tv(
+                "Ton niveau",
+                18
         ));
 
-        content.addView(language);
+        Spinner lev=spin(new String[]{
+                "A1 — Débutant",
+                "A2 — Élémentaire",
+                "B1 — Intermédiaire",
+                "B2 — Avancé",
+                "C1 — Très avancé",
+                "C2 — Maîtrise",
+                "Test de niveau"
+        });
 
-        content.addView(text("Niveau actuel", 19));
+        content.addView(lev);
 
-        Spinner levels = new Spinner(this);
-
-        String[] levelChoices = {
-                "Débutant complet — A1",
-                "Quelques mots — A1",
-                "Je peux communiquer — A2",
-                "Intermédiaire — B1",
-                "Intermédiaire avancé — B2",
-                "Avancé — C1",
-                "Très avancé — C2",
-                "Je ne sais pas — Test"
-        };
-
-        levels.setAdapter(new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                levelChoices
+        content.addView(tv(
+                "Variante de l’anglais",
+                18
         ));
 
-        content.addView(levels);
-
-        content.addView(text("Variante de l'anglais", 19));
-
-        Spinner variant = new Spinner(this);
-
-        String[] variants = {
+        Spinner va=spin(new String[]{
                 "American English",
                 "British English"
-        };
+        });
 
-        variant.setAdapter(new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                variants
+        content.addView(va);
+
+        content.addView(tv(
+                "Objectif quotidien",
+                18
         ));
 
-        content.addView(variant);
-
-        content.addView(text("Objectif quotidien", 19));
-
-        Spinner daily = new Spinner(this);
-
-        String[] dailyGoals = {
+        Spinner dg=spin(new String[]{
                 "5 minutes",
                 "10 minutes",
                 "15 minutes",
@@ -327,138 +337,111 @@ public class MainActivity extends AppCompatActivity {
                 "30 minutes",
                 "45 minutes",
                 "60 minutes"
-        };
-
-        daily.setAdapter(new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                dailyGoals
-        ));
-
-        content.addView(daily);
-
-        Button continueButton =
-                button("Commencer mon parcours");
-
-        continueButton.setOnClickListener(v -> {
-
-            targetLanguage =
-                    language.getSelectedItem().toString();
-
-            englishVariant =
-                    variant.getSelectedItem().toString();
-
-            String selected =
-                    levels.getSelectedItem().toString();
-
-            if (selected.contains("B2")) {
-                level = "B2";
-            } else if (selected.contains("C1")) {
-                level = "C1";
-            } else if (selected.contains("C2")) {
-                level = "C2";
-            } else if (selected.contains("B1")) {
-                level = "B1";
-            } else if (selected.contains("A2")) {
-                level = "A2";
-            } else {
-                level = "A1";
-            }
-
-            saveData();
-
-            if (selected.contains("Test")) {
-                showPlacementTest();
-            } else {
-                showHome();
-            }
         });
 
-        content.addView(continueButton);
-            }
-      private void showPlacementTest() {
+        content.addView(dg);        Button start=btn("Créer mon parcours");
 
-        baseScreen();
+        start.setOnClickListener(v->{
+            targetLanguage=lang.getSelectedItem().toString();
+            variant=va.getSelectedItem().toString();
+            dailyGoal=dg.getSelectedItem().toString();
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
+            String x=lev.getSelectedItem().toString();
 
-        content.addView(text("Test de niveau", 28));
+            level=x.substring(0,2);
 
-        content.addView(text(
-                "Réponds aux questions pour déterminer ton niveau.",
+            save();
+
+            if(x.startsWith("Test"))
+                placement();
+            else
+                home();
+        });
+
+        content.addView(start);
+    }
+
+    private void placement(){
+        screen();
+
+        content.addView(title("Test de niveau"));
+
+        content.addView(tv(
+                "Quelques questions pour proposer ton niveau.",
                 15
         ));
 
-        showPlacementQuestion(content, 0);
+        final String[] q={
+                "I ___ a student.",
+                "She ___ English every day.",
+                "Where ___ you live?",
+                "I have ___ apple.",
+                "They ___ yesterday.",
+                "He has ___ car.",
+                "We are ___ dinner now.",
+                "I have lived here ___ 2020."
+        };
+
+        final String[][] o={
+                {"am","is","are","be"},
+                {"study","studies","studying","studied"},
+                {"do","does","are","is"},
+                {"a","an","the","some"},
+                {"go","goes","went","going"},
+                {"a","an","the","some"},
+                {"cook","cooked","cooking","cooks"},
+                {"for","since","at","on"}
+        };
+
+        final int[] c={
+                0,1,0,1,2,0,2,1
+        };
+
+        placementQ(q,o,c,0,0);
     }
 
-    private void showPlacementQuestion(
-            LinearLayout content,
-            int questionNumber
-    ) {
-
+    private void placementQ(
+            String[] q,
+            String[][] o,
+            int[] c,
+            int i,
+            int score
+    ){
         content.removeAllViews();
 
-        String[] questions = {
-                "Choose the correct answer: I ___ a student.",
-                "Choose the correct answer: She ___ English every day.",
-                "Choose the correct answer: Where ___ you live?",
-                "Choose the correct answer: I have ___ apple.",
-                "Choose the correct answer: They ___ yesterday."
-        };
+        content.addView(title("Test de niveau"));
 
-        String[][] options = {
-                {"am", "is", "are", "be"},
-                {"study", "studies", "studying", "studied"},
-                {"do", "does", "are", "is"},
-                {"a", "an", "the", "some"},
-                {"go", "goes", "went", "going"}
-        };
-
-        int[] correctAnswers = {
-                0,
-                1,
-                0,
-                1,
-                2
-        };
-
-        content.addView(text(
-                "Question " + (questionNumber + 1) + " / " + questions.length,
-                18
+        content.addView(tv(
+                "Question "+(i+1)+" / "+q.length,
+                15
         ));
 
-        content.addView(text(
-                questions[questionNumber],
+        content.addView(tv(
+                q[i],
                 21
         ));
 
-        RadioGroup group = new RadioGroup(this);
+        RadioGroup g=new RadioGroup(this);
 
-        for (String option : options[questionNumber]) {
-
-            RadioButton radio = new RadioButton(this);
-            radio.setText(option);
-            radio.setTextSize(17);
-            radio.setPadding(8, 12, 8, 12);
-
-            group.addView(radio);
+        for(String x:o[i]){
+            RadioButton r=new RadioButton(this);
+            r.setText(x);
+            r.setTextSize(17);
+            g.addView(r);
         }
 
-        content.addView(group);
+        content.addView(g);
 
-        Button next = button(
-                questionNumber == questions.length - 1
-                        ? "Terminer le test"
-                        : "Question suivante"
+        Button b=btn(
+                i==q.length-1
+                        ? "Terminer"
+                        : "Suivant"
         );
 
-        next.setOnClickListener(v -> {
+        b.setOnClickListener(v->{
+            int id=g.getCheckedRadioButtonId();
 
-            int selected = group.getCheckedRadioButtonId();
-
-            if (selected == -1) {
+            if(id<0){
                 Toast.makeText(
                         this,
                         "Choisis une réponse.",
@@ -467,851 +450,1522 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            RadioButton selectedButton =
-                    group.findViewById(selected);
-
-            int selectedIndex =
-                    group.indexOfChild(selectedButton);
-
-            int score = prefs.getInt(
-                    "placementScore",
-                    0
+            int ix=g.indexOfChild(
+                    g.findViewById(id)
             );
 
-            if (selectedIndex == correctAnswers[questionNumber]) {
-                score++;
-            }
+            int ns=score+
+                    (ix==c[i]?1:0);
 
-            prefs.edit()
-                    .putInt("placementScore", score)
-                    .apply();
-
-            if (questionNumber < questions.length - 1) {
-
-                showPlacementQuestion(
-                        content,
-                        questionNumber + 1
+            if(i<q.length-1){
+                placementQ(
+                        q,o,c,i+1,ns
                 );
+            }else{
+                level=
+                        ns<=2?"A1":
+                        ns<=4?"A2":
+                        ns<=5?"B1":
+                        ns<=6?"B2":
+                        "C1";
 
-            } else {
-
-                showPlacementResult(score);
+                save();
+                home();
             }
         });
 
-        content.addView(next);
+        content.addView(b);
     }
 
-    private void showPlacementResult(int score) {
-
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "Résultat du test",
-                28
-        ));
-
-        String detectedLevel;
-
-        if (score <= 1) {
-            detectedLevel = "A1";
-        } else if (score == 2) {
-            detectedLevel = "A2";
-        } else if (score == 3) {
-            detectedLevel = "B1";
-        } else if (score == 4) {
-            detectedLevel = "B2";
-        } else {
-            detectedLevel = "C1";
-        }
-
-        level = detectedLevel;
-
-        content.addView(text(
-                "Score : " + score + " / 5",
-                20
-        ));
-
-        content.addView(text(
-                "Niveau proposé : " + detectedLevel,
-                22
-        ));
-
-        content.addView(text(
-                "Tu peux commencer ton parcours avec ce niveau.",
-                16
-        ));
-
-        Button start = button(
-                "Commencer mon parcours"
+    private TextView header(){
+        TextView h=tv(
+                "🎓  JoEnglish                         ☰",
+                27
         );
 
-        start.setOnClickListener(v -> {
+        h.setTextColor(WHITE);
+        h.setTypeface(null,1);
+        h.setPadding(
+                dp(10),
+                dp(16),
+                dp(10),
+                dp(16)
+        );
+        h.setBackground(bg(BLUE,18));
 
-            saveData();
-
-            showHome();
-        });
-
-        content.addView(start);
+        return h;
     }
 
-    private void showHome() {
+    private void home(){
+        screen();
 
-        baseScreen();
+        content.addView(header());
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        TextView logo = text(
-                "🎓 JoEnglish",
-                30
+        TextView hi=title(
+                "Bonjour "+
+                (firstName.isEmpty()
+                        ?"👋"
+                        :firstName+" 👋")
         );
 
-        logo.setTextColor(BLUE);
-        logo.setGravity(Gravity.CENTER);
+        content.addView(hi);
 
-        content.addView(logo);
-
-        content.addView(text(
-                "Bonjour " +
-                        (firstName.isEmpty()
-                                ? "👋"
-                                : firstName + " 👋"),
-                26
-        ));
-
-        content.addView(text(
-                "Ton parcours : " + level,
-                18
-        ));
-
-        LinearLayout stats =
+        LinearLayout stats=
                 new LinearLayout(this);
 
         stats.setOrientation(
                 LinearLayout.HORIZONTAL
         );
 
-        stats.setGravity(Gravity.CENTER);
+        String[] a={
+                "⭐ XP\n"+xp,
+                "🔥 Série\n"+streak+" jours",
+                "🎯 Aujourd’hui\n"+dailyXp+"/50",
+                "🎁 Récompense\n"+
+                        Math.max(
+                                0,
+                                2-(completedLessons%3)
+                        )+" leçons"
+        };
 
-        TextView xpText = text(
-                "⭐ XP\n" + xp,
-                17
-        );
+        for(String s:a){
+            TextView t=tv(s,14);
+            t.setGravity(17);
+            t.setBackground(bg(WHITE,14));
 
-        TextView streakText = text(
-                "🔥 Série\n" + streak + " jour(s)",
-                17
-        );
-
-        TextView lessonsText = text(
-                "📚 Leçons\n" + completedLessons,
-                17
-        );
-
-        stats.addView(xpText,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                ));
-
-        stats.addView(streakText,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                ));
-
-        stats.addView(lessonsText,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                ));
+            stats.addView(
+                    t,
+                    new LinearLayout.LayoutParams(
+                            0,
+                            dp(78),
+                            1
+                    )
+            );
+        }
 
         content.addView(stats);
 
-        content.addView(text(
-                "🎯 Objectif quotidien",
-                20
-        ));
+        LinearLayout banner=card();
 
-        content.addView(text(
-                "Continue ton apprentissage aujourd'hui.",
+        TextView bt=tv(
+                "De petites leçons pour de grands rêves !",
+                23
+        );
+
+        bt.setTextColor(WHITE);
+        bt.setTypeface(null,1);
+        bt.setBackground(bg(BLUE,16));
+
+        banner.addView(bt);
+
+        banner.addView(tv(
+                "Apprends. Progresse. Réalise tes objectifs.",
                 15
         ));
 
-        Button course = button(
-                "📚 Continuer le cours"
+        content.addView(banner);
+
+        content.addView(
+                section("Leçon recommandée")
         );
 
-        course.setOnClickListener(v ->
-                showLesson(currentLesson)
+        Lesson l=
+                LessonBank.getLessonById(
+                        currentLesson
+                );
+
+        if(l==null)
+            l=LessonBank.getLessonById(1);
+
+        LinearLayout lc=card();
+
+        lc.addView(tv(
+                level+"   Leçon "+l.getId(),
+                14
+        ));
+
+        TextView lt=tv(
+                l.getTitle(),
+                20
         );
 
-        content.addView(course);
+        lt.setTypeface(null,1);
 
-        Button review = button(
-                "🔄 Révisions"
+        lc.addView(lt);
+
+        lc.addView(tv(
+                l.getObjective(),
+                14
+        ));
+
+        Button go=btn("Continuer  ›");
+
+        go.setOnClickListener(
+                v->lesson(l.getId())
         );
 
-        review.setOnClickListener(v ->
-                showReview()
+        lc.addView(go);
+        content.addView(lc);
+
+        content.addView(
+                section("Ton parcours : A1 → C2")
         );
 
-        content.addView(review);
-
-        Button expressions = button(
-                "💬 Expressions utiles"
+        TextView path=tv(
+                "🔵 A1   ─   ⚪ A2   ─   ⚪ B1   ─   ⚪ B2   ─   ⚪ C1   ─   ⚪ C2",
+                15
         );
 
-        expressions.setOnClickListener(v ->
-                showExpressions()
+        content.addView(path);
+                addMenu(
+                "📚 Parcours",
+                "Toutes les leçons",
+                v->course()
         );
 
-        content.addView(expressions);
-
-        Button statsButton = button(
-                "📊 Mes statistiques"
+        addMenu(
+                "💬 Expressions",
+                "1 000+ expressions",
+                v->expressions()
         );
 
-        statsButton.setOnClickListener(v ->
-                showStats()
+        addMenu(
+                "🔄 Révision",
+                "Tes points faibles",
+                v->review()
         );
 
-        content.addView(statsButton);
-
-        Button profile = button(
-                "👤 Mon profil"
+        addMenu(
+                "🏆 Quiz",
+                "Teste tes connaissances",
+                v->quiz()
         );
 
-        profile.setOnClickListener(v ->
-                showProfile()
+        addMenu(
+                "👥 Conversation",
+                "Pratique avec JoBot",
+                v->conversation()
         );
 
-        content.addView(profile);
-
-        Button settings = button(
-                "⚙️ Paramètres"
+        addMenu(
+                "Aa Vocabulaire",
+                "Des milliers de mots",
+                v->vocabulary()
         );
 
-        settings.setOnClickListener(v ->
-                showSettings()
+        addMenu(
+                "📖 Grammaire",
+                "Règles et exemples",
+                v->grammar()
         );
 
-        content.addView(settings);
-    }
+        addMenu(
+                "🎯 Défis",
+                "Missions quotidiennes",
+                v->challenges()
+        );
 
-    private void showLesson(int id) {
+        addMenu(
+                "🎁 Récompenses",
+                "Gagne des trophées",
+                v->rewards()
+        );
 
-        Lesson lesson =
-                LessonBank.getLessonById(id);
+        addMenu(
+                "📊 Statistiques",
+                "Suis tes progrès",
+                v->stats()
+        );
 
-        if (lesson == null) {
+        addMenu(
+                "🗓 Planning",
+                "Organise tes cours",
+                v->planning()
+        );
 
-            Toast.makeText(
-                    this,
-                    "Cette leçon n'est pas encore disponible.",
-                    Toast.LENGTH_SHORT
-            ).show();
+        addMenu(
+                "⚙️ Paramètres",
+                "Son, notifications, profil",
+                v->settings()
+        );
 
-            return;
-        }
+        LinearLayout bot=card();
 
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "Leçon " + lesson.getId(),
+        bot.addView(tv(
+                "🤖  Un petit pas chaque jour fait une grande différence !",
                 18
         ));
 
-        content.addView(text(
-                lesson.getTitle(),
-                28
+        bot.addView(tv(
+                "“Practice makes progress!” — JoBot",
+                14
         ));
 
-        content.addView(text(
-                lesson.getObjective(),
-                16
+        content.addView(bot);
+    }
+
+    private TextView section(String s){
+        TextView t=tv(s,21);
+        t.setTypeface(null,1);
+        t.setTextColor(INDIGO);
+        return t;
+    }
+
+    private void addMenu(
+            String a,
+            String b,
+            View.OnClickListener c
+    ){
+        LinearLayout x=card();
+
+        TextView t=tv(
+                a+"   ›",
+                18
+        );
+
+        t.setTypeface(null,1);
+
+        x.addView(t);
+
+        x.addView(tv(
+                b,
+                13
         ));
 
-        content.addView(text(
-                "📚 Vocabulaire",
-                21
-        ));
+        x.setOnClickListener(c);
 
-        for (String word : lesson.getVocabulary()) {
+        content.addView(x);
+    }
 
-            LinearLayout row =
-                    new LinearLayout(this);
+    private void lesson(int id){
+        Lesson l=
+                LessonBank.getLessonById(id);
 
+        if(l==null){
+            Toast.makeText(
+                    this,
+                    "Leçon indisponible.",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
+
+        screen();
+
+        content.addView(
+                title("Leçon "+l.getId())
+        );
+
+        content.addView(
+                tv(l.getTitle(),27)
+        );
+
+        content.addView(
+                tv(l.getObjective(),16)
+        );
+
+        content.addView(
+                section("📚 Vocabulaire")
+        );
+
+        for(String w:l.getVocabulary()){
+            LinearLayout row=card();
             row.setOrientation(
                     LinearLayout.HORIZONTAL
             );
 
-            TextView wordText =
-                    text(word, 16);
-
-            Button audio =
-                    new Button(this);
-
-            audio.setText("🔊");
-
-            audio.setOnClickListener(v ->
-                    speakText(word.split("=")[0].trim())
-            );
+            TextView t=tv(w,17);
 
             row.addView(
-                    wordText,
+                    t,
                     new LinearLayout.LayoutParams(
                             0,
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            -2,
                             1
                     )
             );
 
-            row.addView(audio);
+            Button a=lightBtn("🔊");
+
+            a.setOnClickListener(
+                    v->speak(
+                            w.split("=")[0].trim()
+                    )
+            );
+
+            row.addView(
+                    a,
+                    new LinearLayout.LayoutParams(
+                            dp(70),
+                            dp(52)
+                    )
+            );
 
             content.addView(row);
         }
 
-        content.addView(text(
-                "🗣️ Exemples",
-                21
-        ));
+        content.addView(
+                section("🗣 Exemples")
+        );
 
-        for (int i = 0;
-             i < lesson.getExamples().length;
-             i++) {
+        for(int i=0;
+            i<l.getExamples().length;
+            i++){
 
-            String example =
-                    lesson.getExamples()[i];
-
-            String translation =
-                    lesson.getTranslations()[i];
-
-            TextView exampleText =
-                    text(
-                            example +
-                                    "\n→ " +
-                                    translation,
-                            17
-                    );
-
-            content.addView(exampleText);
-
-            Button listen =
-                    button("🔊 Écouter");
-
-            listen.setOnClickListener(v ->
-                    speakText(example)
+            TextView e=tv(
+                    l.getExamples()[i]+
+                    "\n→ "+
+                    l.getTranslations()[i],
+                    17
             );
 
-            content.addView(listen);
+            content.addView(e);
+
+            Button a=btn("🔊 ÉCOUTER");
+
+            String z=l.getExamples()[i];
+
+            a.setOnClickListener(
+                    v->speak(z)
+            );
+
+            content.addView(a);
         }
 
-        Button complete =
-                button("✅ Terminer la leçon");
+        Button done=
+                btn("✅ TERMINER LA LEÇON");
 
-        complete.setOnClickListener(v ->
-                showLessonCompleted(lesson)
+        done.setOnClickListener(
+                v->complete(l)
         );
 
-        content.addView(complete);
+        content.addView(done);
+
+        Button back=lightBtn("← Retour");
+
+        back.setOnClickListener(
+                v->home()
+        );
+
+        content.addView(back);
     }
-
-    private void showLessonCompleted(Lesson lesson) {
-
+        private void complete(Lesson l){
         completedLessons++;
+        xp+=l.getXp();
+        dailyXp+=l.getXp();
 
-        xp += lesson.getXp();
-
-        currentLesson = lesson.getId() + 1;
-
-        if (currentLesson >
-                LessonBank.getLessons().size()) {
-
-            currentLesson =
-                    LessonBank.getLessons().size();
-        }
-
-        saveData();
-
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        TextView title =
-                text(
-                        "🎉 Leçon terminée !",
-                        30
+        currentLesson=
+                Math.min(
+                        l.getId()+1,
+                        Math.max(
+                                1,
+                                LessonBank.getLessons().size()
+                        )
                 );
 
-        title.setTextColor(GREEN);
-        title.setGravity(Gravity.CENTER);
+        streak=Math.max(1,streak);
 
-        content.addView(title);
+        save();
 
-        content.addView(text(
-                "+" + lesson.getXp() + " XP",
-                24
-        ));
+        screen();
 
-        content.addView(text(
-                "Excellent travail, " +
-                        firstName + " !",
-                20
-        ));
+        TextView t=
+                title("🎉 Leçon terminée !");
 
-        content.addView(text(
-                "Total XP : " + xp,
-                17
-        ));
-
-        Button next =
-                button("▶ Leçon suivante");
-
-        next.setOnClickListener(v -> {
-
-            int nextId =
-                    lesson.getId() + 1;
-
-            Lesson nextLesson =
-                    LessonBank.getLessonById(nextId);
-
-            if (nextLesson != null) {
-                showLesson(nextId);
-            } else {
-                showHome();
-            }
-        });
-
-        content.addView(next);
-
-        Button home =
-                button("🏠 Retour à l'accueil");
-
-        home.setOnClickListener(v ->
-                showHome()
+        t.setTextColor(
+                Color.rgb(22,163,74)
         );
 
-        content.addView(home);
-                  }
-      private void showReview() {
+        content.addView(t);
 
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "🔄 Révisions",
-                28
-        ));
-
-        content.addView(text(
-                "Révise les mots et expressions déjà étudiés.",
-                16
-        ));
-
-        Lesson lesson =
-                LessonBank.getLessonById(
-                        Math.max(1, currentLesson - 1)
-                );
-
-        if (lesson != null) {
-
-            content.addView(text(
-                    "Dernière leçon : " +
-                            lesson.getTitle(),
-                    20
-            ));
-
-            for (String word :
-                    lesson.getVocabulary()) {
-
-                TextView item =
-                        text(word, 17);
-
-                content.addView(item);
-            }
-
-            Button audio =
-                    button("🔊 Écouter les exemples");
-
-            audio.setOnClickListener(v -> {
-
-                if (lesson.getExamples().length > 0) {
-                    speakText(
-                            lesson.getExamples()[0]
-                    );
-                }
-            });
-
-            content.addView(audio);
-        }
-
-        Button home =
-                button("🏠 Retour à l'accueil");
-
-        home.setOnClickListener(v ->
-                showHome()
+        content.addView(
+                tv(
+                        "+"+l.getXp()+" XP",
+                        24
+                )
         );
 
-        content.addView(home);
+        content.addView(
+                tv(
+                        "Excellent travail, "+
+                        firstName+" !",
+                        19
+                )
+        );
+
+        content.addView(
+                tv(
+                        "Total XP : "+xp,
+                        17
+                )
+        );
+
+        Button n=btn(
+                "▶ Leçon suivante"
+        );
+
+        n.setOnClickListener(
+                v->lesson(
+                        Math.min(
+                                l.getId()+1,
+                                LessonBank.getLessons().size()
+                        )
+                )
+        );
+
+        content.addView(n);
+
+        Button h=lightBtn(
+                "🏠 Accueil"
+        );
+
+        h.setOnClickListener(
+                v->home()
+        );
+
+        content.addView(h);
     }
 
-    private void showExpressions() {
+    private void course(){
+        screen();
 
-        baseScreen();
+        content.addView(
+                title("📚 Parcours")
+        );
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
+        content.addView(
+                tv(
+                        "A1 → C2 · progression sauvegardée sur cet appareil.",
+                        15
+                )
+        );
 
-        content.addView(text(
-                "💬 Expressions utiles",
-                28
-        ));
+        String[] ls={
+                "A1 — Débutant",
+                "A2 — Élémentaire",
+                "B1 — Intermédiaire",
+                "B2 — Avancé",
+                "C1 — Très avancé",
+                "C2 — Maîtrise"
+        };
 
-        String[][] expressions = {
+        for(String x:ls){
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x,19)
+            );
+
+            c.addView(
+                    tv(
+                            x.startsWith(level)
+                                    ?"● Niveau actuel"
+                                    :"○ Parcours disponible",
+                            14
+                    )
+            );
+
+            content.addView(c);
+        }
+
+        for(Lesson l:
+                LessonBank.getLessons()){
+
+            Button b=lightBtn(
+                    "Leçon "+
+                    l.getId()+
+                    " · "+
+                    l.getTitle()
+            );
+
+            b.setOnClickListener(
+                    v->lesson(l.getId())
+            );
+
+            content.addView(b);
+        }
+
+        backHome();
+    }
+
+    private void expressions(){
+        screen();
+
+        content.addView(
+                title("💬 Expressions utiles")
+        );
+
+        String[][] e={
+                {"How are you?","Comment vas-tu ?"},
+                {"Nice to meet you.","Ravi de te rencontrer."},
+                {"Can you help me?","Peux-tu m’aider ?"},
+                {"I don’t understand.","Je ne comprends pas."},
+                {"Could you repeat, please?","Pouvez-vous répéter ?"},
+                {"What does this mean?","Qu’est-ce que cela signifie ?"},
+                {"See you later.","À plus tard."},
+                {"Have a nice day!","Bonne journée !"},
+                {"I need some help.","J’ai besoin d’aide."},
+                {"Where is the bathroom?","Où sont les toilettes ?"}
+        };
+
+        for(String[] x:e){
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x[0],18)
+            );
+
+            c.addView(
+                    tv(
+                            "→ "+x[1],
+                            15
+                    )
+            );
+
+            Button a=lightBtn(
+                    "🔊 Écouter"
+            );
+
+            a.setOnClickListener(
+                    v->speak(x[0])
+            );
+
+            c.addView(a);
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+
+    private void review(){
+        screen();
+
+        content.addView(
+                title("🔄 Révisions")
+        );
+
+        content.addView(
+                tv(
+                        "Révise le vocabulaire de ta dernière leçon.",
+                        15
+                )
+        );
+
+        Lesson l=
+                LessonBank.getLessonById(
+                        Math.max(
+                                1,
+                                currentLesson-1
+                        )
+                );
+
+        if(l!=null){
+            content.addView(
+                    tv(l.getTitle(),20)
+            );
+
+            for(String x:l.getVocabulary())
+                content.addView(
+                        tv("• "+x,17)
+                );
+
+            Button a=btn(
+                    "🔊 Écouter un exemple"
+            );
+
+            a.setOnClickListener(
+                    v->speak(
+                            l.getExamples()[0]
+                    )
+            );
+
+            content.addView(a);
+        }
+
+        backHome();
+    }
+       private void quiz(){
+        screen();
+
+        content.addView(
+                title("🏆 Quiz")
+        );
+
+        content.addView(
+                tv(
+                        "Choisis la bonne réponse.",
+                        16
+                )
+        );
+
+        String[][] q={
                 {
-                        "How are you?",
-                        "Comment vas-tu ?"
+                        "I ___ a student.",
+                        "am","is","are","be"
                 },
                 {
-                        "I'm fine, thank you.",
-                        "Je vais bien, merci."
+                        "She ___ English.",
+                        "study","studies","studying","studied"
                 },
                 {
-                        "Nice to meet you.",
-                        "Ravi de te rencontrer."
-                },
-                {
-                        "Can you help me?",
-                        "Peux-tu m'aider ?"
-                },
-                {
-                        "I don't understand.",
-                        "Je ne comprends pas."
-                },
-                {
-                        "Could you repeat, please?",
-                        "Pourriez-vous répéter, s'il vous plaît ?"
-                },
-                {
-                        "What does this mean?",
-                        "Qu'est-ce que cela signifie ?"
-                },
-                {
-                        "See you later.",
-                        "À plus tard."
-                },
-                {
-                        "Have a nice day!",
-                        "Bonne journée !"
-                },
-                {
-                        "I need some help.",
-                        "J'ai besoin d'aide."
+                        "They ___ yesterday.",
+                        "go","goes","went","going"
                 }
         };
 
-        for (String[] expression :
-                expressions) {
+        quizQ(q,0,0);
+    }
 
-            TextView item =
-                    text(
-                            expression[0] +
-                                    "\n→ " +
-                                    expression[1],
-                            17
+    private void quizQ(
+            String[][] q,
+            int i,
+            int score
+    ){
+        content.removeAllViews();
+
+        content.addView(
+                title("🏆 Quiz")
+        );
+
+        content.addView(
+                tv(
+                        "Question "+(i+1)+
+                        " / "+q.length,
+                        15
+                )
+        );
+
+        content.addView(
+                tv(q[i][0],21)
+        );
+
+        RadioGroup g=
+                new RadioGroup(this);
+
+        for(int k=1;k<=4;k++){
+            RadioButton r=
+                    new RadioButton(this);
+
+            r.setText(q[i][k]);
+            r.setTextSize(17);
+
+            g.addView(r);
+        }
+
+        content.addView(g);
+
+        Button b=btn(
+                i==q.length-1
+                        ?"Voir le résultat"
+                        :"Suivant"
+        );
+
+        b.setOnClickListener(v->{
+            int id=
+                    g.getCheckedRadioButtonId();
+
+            if(id<0)
+                return;
+
+            int ix=
+                    g.indexOfChild(
+                            g.findViewById(id)
                     );
 
-            content.addView(item);
+            int ns=
+                    score+
+                    (
+                        (i==0&&ix==0)||
+                        (i==1&&ix==1)||
+                        (i==2&&ix==2)
+                                ?1
+                                :0
+                    );
 
-            Button listen =
-                    button("🔊 Écouter");
+            if(i<q.length-1){
 
-            listen.setOnClickListener(v ->
-                    speakText(expression[0])
-            );
+                quizQ(
+                        q,
+                        i+1,
+                        ns
+                );
 
-            content.addView(listen);
-        }
+            }else{
 
-        Button home =
-                button("🏠 Retour à l'accueil");
+                xp+=ns*5;
+                save();
 
-        home.setOnClickListener(v ->
-                showHome()
-        );
+                content.removeAllViews();
 
-        content.addView(home);
-    }
+                content.addView(
+                        title("Résultat")
+                );
 
-    private void showStats() {
+                content.addView(
+                        tv(
+                                "Score : "+
+                                ns+
+                                " / "+
+                                q.length,
+                                24
+                        )
+                );
 
-        baseScreen();
+                content.addView(
+                        tv(
+                                "+"+(ns*5)+" XP",
+                                20
+                        )
+                );
 
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "📊 Mes statistiques",
-                28
-        ));
-
-        content.addView(text(
-                "⭐ XP total : " + xp,
-                19
-        ));
-
-        content.addView(text(
-                "🔥 Série actuelle : " +
-                        streak + " jour(s)",
-                19
-        ));
-
-        content.addView(text(
-                "📚 Leçons terminées : " +
-                        completedLessons,
-                19
-        ));
-
-        content.addView(text(
-                "📖 Niveau actuel : " +
-                        level,
-                19
-        ));
-
-        int nextLevelXp =
-                ((xp / 100) + 1) * 100;
-
-        content.addView(text(
-                "🎯 Prochain palier : " +
-                        nextLevelXp + " XP",
-                19
-        ));
-
-        Button home =
-                button("🏠 Retour à l'accueil");
-
-        home.setOnClickListener(v ->
-                showHome()
-        );
-
-        content.addView(home);
-    }
-
-    private void showProfile() {
-
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "👤 Mon profil",
-                28
-        ));
-
-        content.addView(text(
-                "Nom : " +
-                        (firstName.isEmpty()
-                                ? "Non défini"
-                                : firstName),
-                18
-        ));
-
-        content.addView(text(
-                "Nom d'utilisateur : " +
-                        (username.isEmpty()
-                                ? "Non défini"
-                                : username),
-                18
-        ));
-
-        content.addView(text(
-                "Langue : " +
-                        targetLanguage,
-                18
-        ));
-
-        content.addView(text(
-                "Variante : " +
-                        englishVariant,
-                18
-        ));
-
-        content.addView(text(
-                "Niveau : " +
-                        level,
-                18
-        ));
-
-        content.addView(text(
-                "⭐ XP : " + xp,
-                18
-        ));
-
-        content.addView(text(
-                "🔥 Série : " +
-                        streak + " jour(s)",
-                18
-        ));
-
-        Button home =
-                button("🏠 Retour à l'accueil");
-
-        home.setOnClickListener(v ->
-                showHome()
-        );
-
-        content.addView(home);
-    }
-
-    private void showSettings() {
-
-        baseScreen();
-
-        LinearLayout content = (LinearLayout)
-                ((ScrollView) root.getChildAt(0)).getChildAt(0);
-
-        content.addView(text(
-                "⚙️ Paramètres",
-                28
-        ));
-
-        content.addView(text(
-                "Langue : " +
-                        targetLanguage,
-                18
-        ));
-
-        content.addView(text(
-                "Variante : " +
-                        englishVariant,
-                18
-        ));
-
-        content.addView(text(
-                "Niveau : " +
-                        level,
-                18
-        ));
-
-        content.addView(text(
-                "Les données de progression sont " +
-                        "enregistrées localement sur ton appareil.",
-                15
-        ));
-
-        Button testAudio =
-                button("🔊 Tester l'audio");
-
-        testAudio.setOnClickListener(v ->
-                speakText("Welcome to JoEnglish!")
-        );
-
-        content.addView(testAudio);
-
-        Button reset =
-                button("♻️ Réinitialiser la progression");
-
-        reset.setOnClickListener(v -> {
-
-            new AlertDialog.Builder(this)
-                    .setTitle("Réinitialiser ?")
-                    .setMessage(
-                            "Cette action supprimera ta progression, " +
-                            "ton XP et tes leçons terminées."
-                    )
-                    .setNegativeButton(
-                            "Annuler",
-                            null
-                    )
-                    .setPositiveButton(
-                            "Réinitialiser",
-                            (dialog, which) -> {
-
-                                xp = 0;
-                                streak = 0;
-                                completedLessons = 0;
-                                currentLesson = 1;
-
-                                saveData();
-
-                                showHome();
-                            }
-                    )
-                    .show();
+                backHome();
+            }
         });
 
-        content.addView(reset);
-
-        Button home =
-                button("🏠 Retour à l'accueil");
-
-        home.setOnClickListener(v ->
-                showHome()
-        );
-
-        content.addView(home);
-
-        content.addView(text(
-                "\nJoEnglish\n" +
-                        "Apprends aujourd'hui, un meilleur demain !\n\n" +
-                        "Créé par Joseph Marchand",
-                14
-        ));
+        content.addView(b);
     }
 
-    private void speakText(String value) {
+    private void conversation(){
+        screen();
 
-        if (tts == null) {
-            return;
+        content.addView(
+                title(
+                        "👥 Conversation avec JoBot"
+                )
+        );
+
+        content.addView(
+                tv(
+                        "Version hors ligne : choisis une situation et pratique.",
+                        16
+                )
+        );
+
+        String[] a={
+                "Se présenter",
+                "Au restaurant",
+                "À l’aéroport",
+                "Au travail",
+                "Faire des achats",
+                "Petite conversation"
+        };
+
+        for(String x:a){
+
+            Button b=lightBtn(
+                    "💬 "+x
+            );
+
+            b.setOnClickListener(
+                    v->conversationRoom(x)
+            );
+
+            content.addView(b);
         }
 
-        if (Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.LOLLIPOP) {
+        backHome();
+    }
 
-            tts.speak(
-                    value,
-                    TextToSpeech.QUEUE_FLUSH,
-                    null,
-                    "joenglish_" +
-                            System.currentTimeMillis()
+    private void conversationRoom(
+            String topic
+    ){
+        screen();
+
+        content.addView(
+                title(
+                        "JoBot · "+topic
+                )
+        );
+
+        content.addView(
+                tv(
+                        "JoBot : Hello! How are you today?",
+                        18
+                )
+        );
+
+        content.addView(
+                tv(
+                        "Toi : réponds en anglais.",
+                        15
+                )
+        );
+
+        EditText e=input(
+                "Écris ta réponse en anglais…"
+        );
+
+        content.addView(e);
+
+        Button b=btn("Envoyer");
+
+        b.setOnClickListener(v->{
+
+            String r=
+                    e.getText()
+                     .toString()
+                     .trim();
+
+            if(r.isEmpty())
+                return;
+
+            content.addView(
+                    tv(
+                            "Toi : "+r,
+                            17
+                    )
             );
 
-        } else {
-
-            tts.speak(
-                    value,
-                    TextToSpeech.QUEUE_FLUSH,
-                    null
+            content.addView(
+                    tv(
+                            "JoBot : Great! Keep practicing. Try another sentence.",
+                            17
+                    )
             );
+
+            e.setText("");
+        });
+
+        content.addView(b);
+
+        backHome();
+    }
+
+    private void vocabulary(){
+        screen();
+
+        content.addView(
+                title("Aa Vocabulaire")
+        );
+
+        content.addView(
+                tv(
+                        "Mots étudiés et vocabulaire essentiel.",
+                        16
+                )
+        );
+
+        String[] v={
+                "hello = bonjour",
+                "family = famille",
+                "friend = ami",
+                "house = maison",
+                "school = école",
+                "work = travail",
+                "food = nourriture",
+                "water = eau",
+                "book = livre",
+                "learn = apprendre",
+                "speak = parler",
+                "understand = comprendre"
+        };
+
+        for(String x:v){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x,18)
+            );
+
+            Button a=lightBtn("🔊");
+
+            a.setOnClickListener(
+                    z->speak(
+                            x.split("=")[0].trim()
+                    )
+            );
+
+            c.addView(a);
+
+            content.addView(c);
+        }
+
+        backHome();
+            }
+        private void grammar(){
+        screen();
+
+        content.addView(
+                title("📖 Grammaire")
+        );
+
+        String[][] g={
+                {
+                        "BE",
+                        "I am · You are · He is",
+                        "Pour parler de l’identité ou de l’état."
+                },
+                {
+                        "Present simple",
+                        "I work · She works",
+                        "Habitudes et faits généraux."
+                },
+                {
+                        "Questions",
+                        "Do you...? · Does she...?",
+                        "Questions au présent simple."
+                },
+                {
+                        "Past simple",
+                        "I worked · I went",
+                        "Actions terminées dans le passé."
+                },
+                {
+                        "Present continuous",
+                        "I am learning",
+                        "Action en cours."
+                }
+        };
+
+        for(String[] x:g){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x[0],19)
+            );
+
+            c.addView(
+                    tv(x[1],17)
+            );
+
+            c.addView(
+                    tv(x[2],14)
+            );
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+
+    private void challenges(){
+        screen();
+
+        content.addView(
+                title("🎯 Défis")
+        );
+
+        String[] d={
+                "Faire une leçon aujourd’hui",
+                "Gagner 50 XP",
+                "Réviser 10 mots",
+                "Écouter 5 phrases",
+                "Répondre à un quiz"
+        };
+
+        for(String x:d){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(
+                            "🎯 "+x,
+                            17
+                    )
+            );
+
+            c.addView(
+                    tv(
+                            "Progression : "+
+                            Math.min(
+                                    1,
+                                    completedLessons
+                            )+
+                            " / 1",
+                            14
+                    )
+            );
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+
+    private void rewards(){
+        screen();
+
+        content.addView(
+                title("🎁 Récompenses")
+        );
+
+        content.addView(
+                tv(
+                        "Continue à apprendre pour débloquer des trophées.",
+                        15
+                )
+        );
+
+        String[][] r={
+                {"🥉 Premier pas","Terminer 1 leçon"},
+                {"🥈 Régulier","Terminer 5 leçons"},
+                {"🥇 Série","Étudier plusieurs jours"},
+                {"🏆 Maître A1","Finir le parcours A1"},
+                {"💎 Expert","Atteindre un niveau avancé"}
+        };
+
+        for(String[] x:r){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x[0],19)
+            );
+
+            c.addView(
+                    tv(x[1],14)
+            );
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+
+    private void stats(){
+        screen();
+
+        content.addView(
+                title("📊 Statistiques")
+        );
+
+        String[][] s={
+                {"⭐ XP total",String.valueOf(xp)},
+                {"🔥 Série",streak+" jours"},
+                {"📚 Leçons terminées",
+                        String.valueOf(completedLessons)},
+                {"🎯 XP aujourd’hui",
+                        String.valueOf(dailyXp)},
+                {"📖 Niveau",level},
+                {"🌍 Langue",targetLanguage}
+        };
+
+        for(String[] x:s){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(x[0],17)
+            );
+
+            TextView z=
+                    tv(x[1],24);
+
+            z.setTextColor(BLUE);
+
+            c.addView(z);
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+
+    private void planning(){
+        screen();
+
+        content.addView(
+                title("🗓 Planning")
+        );
+
+        content.addView(
+                tv(
+                        "Organise tes séances d’apprentissage.",
+                        16
+                )
+        );
+
+        String[] days={
+                "Lundi",
+                "Mardi",
+                "Mercredi",
+                "Jeudi",
+                "Vendredi",
+                "Samedi",
+                "Dimanche"
+        };
+
+        for(String d:days){
+
+            LinearLayout c=card();
+
+            c.addView(
+                    tv(
+                            "📅 "+d,
+                            18
+                    )
+            );
+
+            c.addView(
+                    tv(
+                            "• "+dailyGoal+
+                            " · anglais",
+                            14
+                    )
+            );
+
+            content.addView(c);
+        }
+
+        backHome();
+    }
+        private void settings(){
+        screen();
+
+        content.addView(
+                title("⚙️ Paramètres")
+        );
+
+        content.addView(
+                tv(
+                        "Compte et apprentissage",
+                        18
+                )
+        );
+
+        LinearLayout p=card();
+
+        p.addView(
+                tv("👤 Profil",18)
+        );
+
+        p.addView(
+                tv(
+                        firstName+
+                        " · "+
+                        (
+                            username.isEmpty()
+                            ?"@utilisateur"
+                            :username
+                        ),
+                        14
+                )
+        );
+
+        Button edit=
+                lightBtn(
+                        "Modifier le profil"
+                );
+
+        edit.setOnClickListener(
+                v->editProfile()
+        );
+
+        p.addView(edit);
+        content.addView(p);
+
+        LinearLayout l=card();
+
+        l.addView(
+                tv("🌍 Langue",18)
+        );
+
+        l.addView(
+                tv(
+                        targetLanguage+
+                        " · "+
+                        variant,
+                        14
+                )
+        );
+
+        l.addView(
+                tv(
+                        "Niveau : "+level,
+                        14
+                )
+        );
+
+        l.addView(
+                tv(
+                        "Objectif : "+goal,
+                        14
+                )
+        );
+
+        Button change=
+                lightBtn(
+                        "Modifier les préférences"
+                );
+
+        change.setOnClickListener(
+                v->languageSetup()
+        );
+
+        l.addView(change);
+        content.addView(l);
+
+        LinearLayout audio=card();
+
+        audio.addView(
+                tv("🔊 Audio",18)
+        );
+
+        Button test=
+                lightBtn(
+                        "Tester la prononciation"
+                );
+
+        test.setOnClickListener(
+                v->speak(
+                        "Welcome to JoEnglish. Let's learn English!"
+                )
+        );
+
+        audio.addView(test);
+        content.addView(audio);
+
+        LinearLayout notif=card();
+
+        notif.addView(
+                tv(
+                        "🔔 Notifications",
+                        18
+                )
+        );
+
+        notif.addView(
+                tv(
+                        "Les rappels peuvent être activés dans les réglages Android.",
+                        14
+                )
+        );
+
+        Button open=
+                lightBtn(
+                        "Ouvrir les réglages des notifications"
+                );
+
+        open.setOnClickListener(v->{
+            try{
+                startActivity(
+                        new Intent(
+                                Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                        ).putExtra(
+                                Settings.EXTRA_APP_PACKAGE,
+                                getPackageName()
+                        )
+                );
+            }catch(Exception e){
+                startActivity(
+                        new Intent(
+                                Settings.ACTION_SETTINGS
+                        )
+                );
+            }
+        });
+
+        notif.addView(open);
+        content.addView(notif);
+
+        LinearLayout reset=card();
+
+        reset.addView(
+                tv("♻️ Données",18)
+        );
+
+        Button rb=
+                lightBtn(
+                        "Réinitialiser la progression"
+                );
+
+        rb.setOnClickListener(v->
+                new AlertDialog.Builder(this)
+                        .setTitle("Réinitialiser ?")
+                        .setMessage(
+                                "XP, série, leçons et progression seront remis à zéro."
+                        )
+                        .setNegativeButton(
+                                "Annuler",
+                                null
+                        )
+                        .setPositiveButton(
+                                "Réinitialiser",
+                                (d,w)->{
+                                    xp=0;
+                                    streak=0;
+                                    completedLessons=0;
+                                    currentLesson=1;
+                                    dailyXp=0;
+                                    save();
+                                    home();
+                                }
+                        )
+                        .show()
+        );
+
+        reset.addView(rb);
+        content.addView(reset);
+
+        content.addView(
+                tv(
+                        "\nJoEnglish\n"+
+                        "Apprends aujourd’hui, un meilleur demain !\n"+
+                        "Créé par Joseph Marchand\n"+
+                        "Version 1.0",
+                        14
+                )
+        );
+
+        backHome();
+    }
+
+    private void editProfile(){
+        screen();
+
+        content.addView(
+                title("👤 Modifier le profil")
+        );
+
+        EditText n=
+                input(
+                        "Nom d’affichage"
+                );
+
+        n.setText(firstName);
+
+        EditText u=
+                input(
+                        "@nom_utilisateur"
+                );
+
+        u.setText(username);
+
+        content.addView(n);
+        content.addView(u);
+
+        Button photo=
+                btn(
+                        "🖼 Choisir une photo de profil"
+                );
+
+        photo.setOnClickListener(v->{
+            Intent i=
+                    new Intent(
+                            Intent.ACTION_OPEN_DOCUMENT
+                    );
+
+            i.setType("image/*");
+
+            i.addCategory(
+                    Intent.CATEGORY_OPENABLE
+            );
+
+            startActivityForResult(i,77);
+        });
+
+        content.addView(photo);
+
+        Button saveb=
+                btn("Enregistrer");
+
+        saveb.setOnClickListener(v->{
+            firstName=
+                    n.getText()
+                     .toString()
+                     .trim();
+
+            username=
+                    u.getText()
+                     .toString()
+                     .trim();
+
+            save();
+            settings();
+        });
+
+        content.addView(saveb);
+
+        backHome();
+                }
+        @Override
+    protected void onActivityResult(
+            int request,
+            int result,
+            Intent data
+    ){
+        super.onActivityResult(
+                request,
+                result,
+                data
+        );
+
+        if(
+                request==77 &&
+                result==RESULT_OK &&
+                data!=null &&
+                data.getData()!=null
+        ){
+            profilePhoto=data.getData();
+
+            try{
+                getContentResolver()
+                        .takePersistableUriPermission(
+                                profilePhoto,
+                                data.getFlags()
+                                &
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        );
+            }catch(Exception ignored){}
+
+            save();
+
+            Toast.makeText(
+                    this,
+                    "Photo enregistrée.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    private void backHome(){
+        Button b=
+                lightBtn(
+                        "🏠 Retour à l’accueil"
+                );
+
+        b.setOnClickListener(
+                v->home()
+        );
+
+        content.addView(b);
+    }
+
+    private void speak(String s){
+        if(tts!=null){
+
+            if(Build.VERSION.SDK_INT>=21){
+
+                tts.speak(
+                        s,
+                        TextToSpeech.QUEUE_FLUSH,
+                        null,
+                        "jo_"+
+                        System.currentTimeMillis()
+                );
+
+            }else{
+
+                tts.speak(
+                        s,
+                        TextToSpeech.QUEUE_FLUSH,
+                        null
+                );
+            }
         }
     }
 
     @Override
-    protected void onDestroy() {
-
-        if (tts != null) {
-
+    protected void onDestroy(){
+        if(tts!=null){
             tts.stop();
             tts.shutdown();
-            tts = null;
+            tts=null;
         }
 
         super.onDestroy();
     }
-                  }
+}
