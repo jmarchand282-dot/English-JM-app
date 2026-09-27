@@ -2,26 +2,27 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Notifications -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Pour les rappels programmés -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/ic_joenglish"
         android:label="JoEnglish"
         android:supportsRtl="true"
         android:theme="@style/Theme.JoEnglish">
 
-        <!-- Écran principal -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
 
             <intent-filter>
 
-                <action android:name="android.intent.action.MAIN" />
+                <action
+                    android:name="android.intent.action.MAIN" />
 
                 <category
                     android:name="android.intent.category.LAUNCHER" />
@@ -30,7 +31,6 @@
 
         </activity>
 
-        <!-- Récepteur des rappels -->
         <receiver
             android:name=".notifications.ReminderReceiver"
             android:exported="false" />
