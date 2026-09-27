@@ -2,6 +2,7 @@ package com.josephmarchand.joenglish.notifications;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,92 +12,100 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.josephmarchand.joenglish.MainActivity;
+import com.josephmarchand.joenglish.R;
 
 public class ReminderReceiver extends BroadcastReceiver {
 
-    private static final String CHANNEL_ID = "joenglish_reminders";
+    private static final String CHANNEL_ID =
+            "joenglish_reminders";
+
     private static final int NOTIFICATION_ID = 1001;
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(
+            Context context,
+            Intent intent
+    ) {
 
         createNotificationChannel(context);
 
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(context, CHANNEL_ID)
-                        .setSmallIcon(android.R.drawable.ic_dialog_info)
-                        .setContentTitle("JoEnglish")
-                        .setContentText(
-                                "C est le moment d apprendre quelques mots d anglais !"
-                        )
-                        .setPriority(
-                                NotificationCompat.PRIORITY_DEFAULT
-                        )
-                        .setAutoCancel(true);
-
-        Intent openAppIntent =
+        Intent openIntent =
                 new Intent(context, MainActivity.class);
 
-        openAppIntent.setFlags(
+        openIntent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP
         );
 
-        android.app.PendingIntent pendingIntent =
-                android.app.PendingIntent.getActivity(
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(
                         context,
                         0,
-                        openAppIntent,
+                        openIntent,
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                                ? android.app.PendingIntent.FLAG_UPDATE_CURRENT
-                                | android.app.PendingIntent.FLAG_IMMUTABLE
-                                : android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                                ? PendingIntent.FLAG_UPDATE_CURRENT
+                                | PendingIntent.FLAG_IMMUTABLE
+                                : PendingIntent.FLAG_UPDATE_CURRENT
                 );
 
-        builder.setContentIntent(pendingIntent);
+        NotificationCompat.Builder notification =
+                new NotificationCompat.Builder(
+                        context,
+                        CHANNEL_ID
+                )
+                .setSmallIcon(R.drawable.ic_joenglish)
+                .setContentTitle("JoEnglish")
+                .setContentText(
+                        "C'est le moment d'apprendre quelques mots d'anglais !"
+                )
+                .setPriority(
+                        NotificationCompat.PRIORITY_DEFAULT
+                )
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
 
         try {
+
             NotificationManagerCompat
                     .from(context)
                     .notify(
                             NOTIFICATION_ID,
-                            builder.build()
+                            notification.build()
                     );
+
         } catch (SecurityException ignored) {
-            // Les notifications peuvent etre refusees.
+            // Notification refusée par l'utilisateur.
         }
     }
 
-    private void createNotificationChannel(Context context) {
+    private void createNotificationChannel(
+            Context context
+    ) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            CharSequence name = "Rappels JoEnglish";
-
-            String description =
-                    "Notifications de rappel pour apprendre l anglais";
-
-            int importance =
-                    NotificationManager.IMPORTANCE_DEFAULT;
+        if (Build.VERSION.SDK_INT >=
+                Build.VERSION_CODES.O) {
 
             NotificationChannel channel =
                     new NotificationChannel(
                             CHANNEL_ID,
-                            name,
-                            importance
+                            "Rappels JoEnglish",
+                            NotificationManager.IMPORTANCE_DEFAULT
                     );
 
-            channel.setDescription(description);
+            channel.setDescription(
+                    "Rappels pour continuer ton apprentissage."
+            );
 
-            NotificationManager notificationManager =
+            NotificationManager manager =
                     context.getSystemService(
                             NotificationManager.class
                     );
 
-            if (notificationManager != null) {
-                notificationManager
-                        .createNotificationChannel(channel);
+            if (manager != null) {
+                manager.createNotificationChannel(
+                        channel
+                );
             }
         }
     }
-                    }
+}
