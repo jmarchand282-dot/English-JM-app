@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Fond -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+
+    <!-- Cercle central -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,14 A40,40 0,1 0,54 94 A40,40 0,1 0,54 14" />
+
+    <!-- Toque de diplômé -->
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M20,43 L54,27 L88,43 L54,59 Z" />
+
+    <!-- Partie basse de la toque -->
+    <path
+        android:fillColor="#3730A3"
+        android:pathData="M32,49 L54,59 L76,49 L76,62 C64,70 44,70 32,62 Z" />
+
+    <!-- Pompon -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M85,42 L94,47 L94,61 L89,64 L85,61 Z" />
+
+    <!-- Livre -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M27,73 C36,68 45,69 54,75 L54,87 C45,81 36,80 27,84 Z" />
+
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M54,75 C63,69 72,68 81,73 L81,84 C72,80 63,81 54,87 Z" />
+
+    <!-- Ligne centrale du livre -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,75 L56,75 L56,88 L52,88 Z" />
+
+</vector>
