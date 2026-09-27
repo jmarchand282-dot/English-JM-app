@@ -593,19 +593,21 @@ public class MainActivity extends AppCompatActivity {
 
         lc.addView(lt);
 
-        lc.addView(tv(
-                l.getObjective(),
-                14
-        ));
+        final Lesson currentLesson = l;
 
-        Button go=btn("Continuer  ›");
+lc.addView(tv(
+        currentLesson.getObjective(),
+        14
+));
 
-        go.setOnClickListener(
-                v->lesson(l.getId())
-        );
+Button go=btn("Continuer  ›");
 
-        lc.addView(go);
-        content.addView(lc);
+go.setOnClickListener(
+        v->lesson(currentLesson.getId())
+);
+
+lc.addView(go);
+content.addView(lc);
 
         content.addView(
                 section("Ton parcours : A1 → C2")
