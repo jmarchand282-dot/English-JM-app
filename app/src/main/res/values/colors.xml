@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <color name="jo_blue">#4F46E5</color>
+    <color name="jo_blue_dark">#3730A3</color>
     <color name="jo_green">#16A34A</color>
+    <color name="jo_red">#DC2626</color>
+    <color name="jo_orange">#F59E0B</color>
+
     <color name="jo_background">#F7F8FC</color>
+    <color name="jo_surface">#FFFFFF</color>
     <color name="jo_dark">#1E1E28</color>
-    <color name="white">#FFFFFF</color>
+    <color name="jo_gray">#6B7280</color>
+    <color name="jo_light_gray">#E5E7EB</color>
+
 </resources>
