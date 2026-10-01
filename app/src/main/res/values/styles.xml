@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.JoEnglish" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">@color/jo_background</item>
+        <item name="android:statusBarColor">@color/jo_blue</item>
         <item name="android:navigationBarColor">@color/jo_background</item>
+        <item name="android:windowActionModeOverlay">true</item>
         <item name="android:colorAccent">@color/jo_blue</item>
     </style>
 
